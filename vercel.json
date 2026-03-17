@@ -1,0 +1,15 @@
+{
+  "framework": "nextjs",
+  "regions": ["hnd1", "icn1", "sin1", "kix1"],
+  "headers": [
+    {
+      "source": "/uploads/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
+}
