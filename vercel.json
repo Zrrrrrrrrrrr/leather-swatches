@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "regions": ["hnd1", "icn1", "sin1", "kix1"],
+  "region": "sin1",
   "headers": [
     {
       "source": "/uploads/(.*)",
