@@ -47,7 +47,6 @@ export async function POST(request: NextRequest) {
     // 上传到 Vercel Blob
     console.log('[Upload] Calling put()...');
     const blob = await put(fileName, file, {
-      access: 'public',
       contentType: file.type,
     });
     console.log('[Upload] Upload successful:', blob.url);
