@@ -44,11 +44,12 @@ export async function POST(request: NextRequest) {
     const fileName = `uploads/${timestamp}_${randomStr}.${fileExt}`;
     console.log('[Upload] Generated filename:', fileName);
 
-    // 上传到 Vercel Blob
+    // 上传到 Vercel Blob - 不指定 access 参数，使用存储的默认设置
     console.log('[Upload] Calling put()...');
     const blob = await put(fileName, file, {
       contentType: file.type,
-    } as any);
+      addRandomSuffix: false,
+    });
     console.log('[Upload] Upload successful:', blob.url);
 
     // 返回公开访问 URL
