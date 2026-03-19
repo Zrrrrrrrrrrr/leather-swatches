@@ -143,16 +143,14 @@ export default function MerchantDashboard() {
       setUploading(true);
       setUploadProgress('正在上传图片...');
       
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-
-      fetch('/api/upload', {
+      // 使用官方教程方式：直接发送文件，通过 query 参数传递文件名
+      fetch(`/api/upload?filename=${selectedFile.name}`, {
         method: 'POST',
-        body: formData,
+        body: selectedFile,
       })
         .then((res) => res.json())
         .then((uploadData) => {
-          if (uploadData.success) {
+          if (uploadData.url) {
             setUploadProgress('上传成功，正在保存...');
             // 文件上传成功后，保存图片信息
             return fetch(`/api/swatches/${managingImageSwatch.id}/images`, {
@@ -160,7 +158,7 @@ export default function MerchantDashboard() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 product_type: newImage.product_type,
-                image_url: uploadData.imageUrl,
+                image_url: uploadData.url,
                 description: newImage.description,
               }),
             });
@@ -181,7 +179,8 @@ export default function MerchantDashboard() {
           }
         })
         .catch((err) => {
-          alert('上传失败：' + err.message);
+          console.error('Upload error:', err);
+          alert('上传失败：' + (err.message || '未知错误'));
         })
         .finally(() => {
           setUploading(false);
