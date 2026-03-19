@@ -11,8 +11,10 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const body = await request.arrayBuffer();
 
-  // 不传 token，让库自动从 BLOB_READ_WRITE_TOKEN 环境变量读取
-  const blob = await put(filename, body, {
+  // 添加到 img/ 文件夹（Vercel Blob 使用路径前缀作为文件夹）
+  const blobPath = `img/${filename}`;
+
+  const blob = await put(blobPath, body, {
     access: 'public',
   });
 
