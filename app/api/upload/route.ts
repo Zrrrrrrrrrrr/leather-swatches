@@ -12,7 +12,9 @@ export async function POST(request: NextRequest) {
         error: 'Vercel Blob 未配置，请设置 BLOB_READ_WRITE_TOKEN 环境变量' 
       }, { status: 503 });
     }
-    console.log('[Upload] BLOB token found');
+    // 输出 token 前缀用于调试（不暴露完整 token）
+    const tokenPrefix = process.env.BLOB_READ_WRITE_TOKEN.substring(0, 20) + '...';
+    console.log('[Upload] BLOB token found:', tokenPrefix);
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
