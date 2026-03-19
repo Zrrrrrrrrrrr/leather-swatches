@@ -11,15 +11,15 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const body = await request.arrayBuffer();
 
+  // 不传 token，让库自动从 BLOB_READ_WRITE_TOKEN 环境变量读取
   const blob = await put(filename, body, {
     access: 'public',
-    token: process.env.BLOB_READ_WRITE_TOKEN!,
   });
 
   return NextResponse.json({
+    success: true,
     url: blob.url,
     downloadUrl: blob.downloadUrl,
     pathname: blob.pathname,
-    contentType: blob.contentType,
   });
 }
