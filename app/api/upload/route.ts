@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
     const blob = await put(fileName, file, {
       contentType: file.type,
       addRandomSuffix: false,
+      access: 'public',
       token: process.env.BLOB_READ_WRITE_TOKEN,
     });
     console.log('[Upload] Upload successful:', blob.url);
