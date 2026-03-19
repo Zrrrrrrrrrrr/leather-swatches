@@ -9,8 +9,11 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: 'Missing filename' }, { status: 400 });
   }
 
+  // 读取请求体为 ArrayBuffer
+  const body = await request.arrayBuffer();
+
   // 使用官方教程的标准方式
-  const blob = await put(filename, request.body, {
+  const blob = await put(filename, body, {
     access: 'public',
   });
 
