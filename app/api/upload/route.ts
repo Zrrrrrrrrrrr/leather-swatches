@@ -44,11 +44,13 @@ export async function POST(request: NextRequest) {
     const fileName = `uploads/${timestamp}_${randomStr}.${fileExt}`;
     console.log('[Upload] Generated filename:', fileName);
 
-    // 上传到 Vercel Blob - 使用类型断言绕过 access 参数限制
+    // 上传到 Vercel Blob - 指定 store 名称
     console.log('[Upload] Calling put()...');
     const blob = await put(fileName, file, {
       contentType: file.type,
       addRandomSuffix: false,
+      // 指定 store 名称（与 Vercel 控制台创建的一致）
+      storeName: 'leather-swatches-blob',
     } as any);
     console.log('[Upload] Upload successful:', blob.url);
 
