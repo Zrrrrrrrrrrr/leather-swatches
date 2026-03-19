@@ -46,13 +46,12 @@ export async function POST(request: NextRequest) {
     const fileName = `uploads/${timestamp}_${randomStr}.${fileExt}`;
     console.log('[Upload] Generated filename:', fileName);
 
-    // 上传到 Vercel Blob - token 已关联到 leather-swatches-blob store
+    // 上传到 Vercel Blob - 库会自动从 BLOB_READ_WRITE_TOKEN 环境变量读取
     console.log('[Upload] Calling put()...');
     const blob = await put(fileName, file, {
       contentType: file.type,
       addRandomSuffix: false,
       access: 'public',
-      token: process.env.BLOB_READ_WRITE_TOKEN,
     });
     console.log('[Upload] Upload successful:', blob.url);
 
