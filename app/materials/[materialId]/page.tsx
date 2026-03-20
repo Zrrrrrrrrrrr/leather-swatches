@@ -27,6 +27,57 @@ interface ProductImage {
   description: string | null;
 }
 
+// 图片放大 Modal 组件
+function ImageModal({
+  imageUrl,
+  alt,
+  onClose,
+}: {
+  imageUrl: string;
+  alt: string;
+  onClose: () => void;
+}) {
+  // 点击背景关闭
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  // ESC 键关闭
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+      onClick={handleBackdropClick}
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white hover:text-gray-300 text-4xl font-bold z-10"
+        aria-label="关闭"
+      >
+        ×
+      </button>
+      <div className="max-w-5xl max-h-full">
+        <img
+          src={imageUrl}
+          alt={alt}
+          className="max-w-full max-h-[90vh] object-contain rounded-lg"
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function MaterialDetail() {
   const params = useParams();
   const materialId = params.materialId as string;
@@ -36,6 +87,7 @@ export default function MaterialDetail() {
   const [selectedSwatch, setSelectedSwatch] = useState<Swatch | null>(null);
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     // 获取材料详情
@@ -179,11 +231,14 @@ export default function MaterialDetail() {
               <div className="space-y-4">
                 {productImages.map((img) => (
                   <div key={img.id} className="border rounded-lg overflow-hidden">
-                    <div className="aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
+                    <div
+                      className="aspect-video bg-gray-100 flex items-center justify-center overflow-hidden cursor-pointer group"
+                      onClick={() => setSelectedImage(img.image_url)}
+                    >
                       <img
                         src={img.image_url}
                         alt={`${img.product_type}展示`}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNlOGQ3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjQwIiBmaWxsPSIjZGNkM2JhIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+4pSpPC90ZXh0Pjwvc3ZnPg==';
                         }}
@@ -202,6 +257,17 @@ export default function MaterialDetail() {
               </div>
             )}
           </div>
+        </div>
+      </main>
+
+      {/* 图片放大 Modal */}
+      {selectedImage && (
+        <ImageModal
+          imageUrl={selectedImage}
+          alt="产品放大图"
+          onClose={() => setSelectedImage(null)}
+        />
+      )}
         </div>
       </main>
     </div>
