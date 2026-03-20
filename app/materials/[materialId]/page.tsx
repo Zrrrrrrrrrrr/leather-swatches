@@ -89,6 +89,11 @@ export default function MaterialDetail() {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
+  // 调试：监听 selectedImage 变化
+  useEffect(() => {
+    console.log('selectedImage changed:', selectedImage);
+  }, [selectedImage]);
+
   useEffect(() => {
     // 获取材料详情
     fetch('/api/materials')
@@ -233,21 +238,26 @@ export default function MaterialDetail() {
                   <div key={img.id} className="border rounded-lg overflow-hidden">
                     <div
                       className="relative aspect-video bg-gray-100 flex items-center justify-center overflow-hidden cursor-pointer group"
-                      onClick={() => {
-                        console.log('Click image:', img.image_url);
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('=== Click image ===');
+                        console.log('Image URL:', img.image_url);
+                        console.log('Setting selectedImage to:', img.image_url);
                         setSelectedImage(img.image_url);
+                        console.log('selectedImage state after set:', selectedImage);
                       }}
                     >
                       <img
                         src={img.image_url}
                         alt={`${img.product_type}展示`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNlOGQ3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjQwIiBmaWxsPSIjZGNkM2JhIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+4pSpPC90ZXh0Pjwvc3ZnPg==';
                         }}
                       />
                       {/* 悬停时显示放大提示 */}
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center pointer-events-none">
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white bg-opacity-90 px-4 py-2 rounded-lg flex items-center gap-2">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
