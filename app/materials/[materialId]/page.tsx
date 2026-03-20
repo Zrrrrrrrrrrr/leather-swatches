@@ -268,8 +268,6 @@ export default function MaterialDetail() {
           onClose={() => setSelectedImage(null)}
         />
       )}
-        </div>
-      </main>
     </div>
   );
 }
