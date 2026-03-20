@@ -14,8 +14,20 @@ export async function POST(request: Request): Promise<NextResponse> {
   // 添加到 img/ 文件夹（Vercel Blob 使用路径前缀作为文件夹）
   const blobPath = `img/${filename}`;
 
+  // 从环境变量获取 token
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+
+  if (!token) {
+    console.error('BLOB_READ_WRITE_TOKEN is not set');
+    return NextResponse.json(
+      { error: 'Blob token not configured' },
+      { status: 500 }
+    );
+  }
+
   const blob = await put(blobPath, body, {
     access: 'public',
+    token,
   });
 
   return NextResponse.json({
