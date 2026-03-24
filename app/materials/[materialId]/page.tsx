@@ -95,24 +95,45 @@ export default function MaterialDetail() {
   }, [selectedImage]);
 
   useEffect(() => {
-    // 获取材料详情
-    fetch('/api/materials')
-      .then((res) => res.json())
-      .then((materials: Material[]) => {
-        const mat = materials.find((m) => m.id === parseInt(materialId));
-        setMaterial(mat || null);
-      });
+    let isMounted = true;
 
-    // 获取色卡选项
-    fetch(`/api/materials/${materialId}/swatches`)
-      .then((res) => res.json())
-      .then((data: Swatch[]) => {
-        setSwatches(data);
-        if (data.length > 0) {
-          setSelectedSwatch(data[0]);
+    const loadData = async () => {
+      try {
+        // 并行获取材料和色卡数据
+        const [materialsRes, swatchesRes] = await Promise.all([
+          fetch('/api/materials'),
+          fetch(`/api/materials/${materialId}/swatches`)
+        ]);
+
+        const materials = await materialsRes.json();
+        const swatchesData = await swatchesRes.json();
+
+        if (!isMounted) return;
+
+        // 查找当前材料
+        const mat = materials.find((m: Material) => m.id === parseInt(materialId));
+        setMaterial(mat || null);
+
+        // 设置色卡数据
+        setSwatches(swatchesData);
+        if (swatchesData.length > 0) {
+          setSelectedSwatch(swatchesData[0]);
         }
+
         setLoading(false);
-      });
+      } catch (err) {
+        console.error('Failed to load data:', err);
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [materialId]);
 
   useEffect(() => {
