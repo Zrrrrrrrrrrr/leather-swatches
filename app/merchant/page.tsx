@@ -274,7 +274,16 @@ export default function MerchantDashboard() {
         method: 'POST',
         body: selectedFile,
       })
-        .then((res) => res.json())
+        .then((res) => {
+          // 检查 HTTP 状态码
+          if (res.status === 413) {
+            throw new Error('文件太大！最大支持 5MB。请压缩图片后重试。');
+          }
+          if (!res.ok) {
+            throw new Error(`上传失败：${res.status} ${res.statusText}`);
+          }
+          return res.json();
+        })
         .then((uploadData) => {
           if (uploadData.url) {
             setUploadProgress('上传成功，正在保存...');
@@ -289,7 +298,7 @@ export default function MerchantDashboard() {
               }),
             });
           } else {
-            throw new Error(uploadData.error || '上传失败');
+            throw new Error(uploadData.error || uploadData.message || '上传失败');
           }
         })
         .then((res) => res.json())
@@ -301,12 +310,21 @@ export default function MerchantDashboard() {
             setShowImageUpload(false);
             loadProductImages(managingImageSwatch.id);
           } else {
-            alert('添加失败：' + data.error);
+            alert('添加失败：' + (data.error || '未知错误'));
           }
         })
         .catch((err) => {
           console.error('Upload error:', err);
-          alert('上传失败：' + (err.message || '未知错误'));
+          // 显示友好的错误信息
+          let errorMsg = '上传失败：';
+          if (err.message?.includes('413') || err.message?.includes('文件太大')) {
+            errorMsg = '❌ 文件太大！\n最大支持 5MB。\n\n建议：\n1. 使用图片压缩工具\n2. 或者拍摄更小的图片';
+          } else if (err.message?.includes('token')) {
+            errorMsg = '❌ 服务器配置错误\n请联系管理员检查 BLOB_READ_WRITE_TOKEN';
+          } else {
+            errorMsg += (err.message || '未知错误');
+          }
+          alert(errorMsg);
         })
         .finally(() => {
           setUploading(false);
@@ -345,12 +363,21 @@ export default function MerchantDashboard() {
         e.target.value = '';
         return;
       }
-      // 验证文件大小
-      if (file.size > 5 * 1024 * 1024) {
-        alert('文件大小不能超过 5MB');
+      // 验证文件大小（5MB）
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+        alert(`文件太大！\n当前大小：${sizeMB}MB\n最大支持：5MB\n\n建议：\n1. 压缩图片后上传\n2. 或者使用更小的图片`);
         e.target.value = '';
         return;
       }
+      // 显示文件信息
+      const sizeKB = (file.size / 1024).toFixed(1);
+      console.log('已选择文件:', {
+        name: file.name,
+        size: `${sizeKB} KB`,
+        type: file.type
+      });
       setSelectedFile(file);
     }
   };
