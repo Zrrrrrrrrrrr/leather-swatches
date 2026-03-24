@@ -85,3 +85,77 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create material' }, { status: 500 });
   }
 }
+
+// 更新材料
+export async function PUT(request: NextRequest) {
+  try {
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ error: 'Supabase 未配置' }, { status: 503 });
+    }
+
+    const body = await request.json();
+    const { id, name, description, category } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Material ID is required' }, { status: 400 });
+    }
+
+    const updateData: any = {};
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description || null;
+    if (category !== undefined) updateData.category = category || null;
+
+    const { data, error } = await supabase!
+      .from('materials')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('Failed to update material:', error);
+    return NextResponse.json({ error: 'Failed to update material' }, { status: 500 });
+  }
+}
+
+// 删除材料
+export async function DELETE(request: NextRequest) {
+  try {
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ error: 'Supabase 未配置' }, { status: 503 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Material ID is required' }, { status: 400 });
+    }
+
+    // 先删除关联的色卡（级联删除）
+    const { error: swatchesError } = await supabase!
+      .from('swatches')
+      .delete()
+      .eq('material_id', parseInt(id));
+
+    if (swatchesError) {
+      console.error('Failed to delete related swatches:', swatchesError);
+    }
+
+    // 删除材料
+    const { error } = await supabase!
+      .from('materials')
+      .delete()
+      .eq('id', parseInt(id));
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to delete material:', error);
+    return NextResponse.json({ error: 'Failed to delete material' }, { status: 500 });
+  }
+}

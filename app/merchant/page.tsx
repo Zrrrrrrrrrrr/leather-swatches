@@ -34,6 +34,18 @@ export default function MerchantDashboard() {
   const [showAddMaterial, setShowAddMaterial] = useState(false);
   const [showAddSwatch, setShowAddSwatch] = useState(false);
   
+  // 编辑状态
+  const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
+  const [editingSwatch, setEditingSwatch] = useState<Swatch | null>(null);
+  const [editMaterialForm, setEditMaterialForm] = useState({ name: '', description: '', category: '' });
+  const [editSwatchForm, setEditSwatchForm] = useState({
+    color_name: '',
+    color_code: '#8B4513',
+    description: '',
+    price: '',
+    stock: '',
+  });
+  
   // 图片管理状态
   const [managingImageSwatch, setManagingImageSwatch] = useState<Swatch | null>(null);
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
@@ -121,6 +133,120 @@ export default function MerchantDashboard() {
           loadSwatches(selectedMaterial.id);
         } else {
           alert('添加失败：' + data.error);
+        }
+      });
+  };
+
+  // 材料编辑功能
+  const handleEditMaterial = (material: Material) => {
+    setEditingMaterial(material);
+    setEditMaterialForm({
+      name: material.name,
+      description: material.description || '',
+      category: material.category || '',
+    });
+  };
+
+  const handleUpdateMaterial = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMaterial) return;
+
+    fetch('/api/materials', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: editingMaterial.id,
+        ...editMaterialForm,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.id) {
+          alert('材料更新成功！');
+          setEditingMaterial(null);
+          loadMaterials();
+          if (selectedMaterial?.id === editingMaterial.id) {
+            setSelectedMaterial({ ...selectedMaterial, ...editMaterialForm });
+          }
+        } else {
+          alert('更新失败：' + data.error);
+        }
+      });
+  };
+
+  const handleDeleteMaterial = (materialId: number, materialName: string) => {
+    if (!confirm(`确定要删除材料"${materialName}"吗？\n注意：该材料下的所有色卡和产品图片也将被删除！`)) return;
+
+    fetch(`/api/materials?id=${materialId}`, {
+      method: 'DELETE',
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          alert('材料已删除');
+          if (selectedMaterial?.id === materialId) {
+            setSelectedMaterial(null);
+            setSwatches([]);
+          }
+          loadMaterials();
+        } else {
+          alert('删除失败：' + data.error);
+        }
+      });
+  };
+
+  // 色卡编辑功能
+  const handleEditSwatch = (swatch: Swatch) => {
+    setEditingSwatch(swatch);
+    setEditSwatchForm({
+      color_name: swatch.color_name,
+      color_code: swatch.color_code || '#8B4513',
+      description: swatch.description || '',
+      price: swatch.price?.toString() || '',
+      stock: swatch.stock.toString(),
+    });
+  };
+
+  const handleUpdateSwatch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMaterial || !editingSwatch) return;
+
+    fetch(`/api/materials/${selectedMaterial.id}/swatches`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: editingSwatch.id,
+        ...editSwatchForm,
+        price: parseFloat(editSwatchForm.price) || null,
+        stock: parseInt(editSwatchForm.stock) || 0,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.id) {
+          alert('色卡更新成功！');
+          setEditingSwatch(null);
+          loadSwatches(selectedMaterial.id);
+        } else {
+          alert('更新失败：' + data.error);
+        }
+      });
+  };
+
+  const handleDeleteSwatch = (swatchId: number, swatchName: string) => {
+    if (!selectedMaterial) return;
+    if (!confirm(`确定要删除色卡"${swatchName}"吗？\n注意：该色卡的所有产品图片也将被删除！`)) return;
+
+    fetch(`/api/materials/${selectedMaterial.id}/swatches?id=${swatchId}`, {
+      method: 'DELETE',
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          alert('色卡已删除');
+          loadSwatches(selectedMaterial.id);
+        } else {
+          alert('删除失败：' + data.error);
         }
       });
   };
@@ -324,20 +450,47 @@ export default function MerchantDashboard() {
 
               <div className="space-y-2">
                 {materials.map((material) => (
-                  <button
+                  <div
                     key={material.id}
-                    onClick={() => handleSelectMaterial(material)}
-                    className={`w-full text-left p-3 rounded-lg transition-colors ${
+                    className={`group relative p-3 rounded-lg transition-colors ${
                       selectedMaterial?.id === material.id
                         ? 'bg-blue-50 border-blue-300 border'
                         : 'bg-gray-50 hover:bg-gray-100'
                     }`}
                   >
-                    <p className="font-medium text-gray-900">{material.name}</p>
-                    {material.category && (
-                      <p className="text-sm text-gray-600">{material.category}</p>
-                    )}
-                  </button>
+                    <button
+                      onClick={() => handleSelectMaterial(material)}
+                      className="w-full text-left"
+                    >
+                      <p className="font-medium text-gray-900">{material.name}</p>
+                      {material.category && (
+                        <p className="text-sm text-gray-600">{material.category}</p>
+                      )}
+                    </button>
+                    {/* 操作按钮 */}
+                    <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditMaterial(material);
+                        }}
+                        className="p-1 text-blue-600 hover:bg-blue-100 rounded"
+                        title="编辑"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteMaterial(material.id, material.name);
+                        }}
+                        className="p-1 text-red-600 hover:bg-red-100 rounded"
+                        title="删除"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -413,7 +566,30 @@ export default function MerchantDashboard() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {swatches.map((swatch) => (
-                      <div key={swatch.id} className="border rounded-lg p-4 bg-gray-50">
+                      <div key={swatch.id} className="border rounded-lg p-4 bg-gray-50 relative group">
+                        {/* 操作按钮 */}
+                        <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditSwatch(swatch);
+                            }}
+                            className="p-1 text-blue-600 hover:bg-blue-100 rounded"
+                            title="编辑"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteSwatch(swatch.id, swatch.color_name);
+                            }}
+                            className="p-1 text-red-600 hover:bg-red-100 rounded"
+                            title="删除"
+                          >
+                            🗑️
+                          </button>
+                        </div>
                         <div
                           className="w-full h-20 rounded mb-3"
                           style={{ backgroundColor: swatch.color_code || '#ccc' }}
@@ -443,6 +619,158 @@ export default function MerchantDashboard() {
             </div>
           </div>
         </div>
+
+        {/* 材料编辑模态框 */}
+        {editingMaterial && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">✏️ 编辑材料</h2>
+                <form onSubmit={handleUpdateMaterial}>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        材料名称 *
+                      </label>
+                      <input
+                        type="text"
+                        value={editMaterialForm.name}
+                        onChange={(e) => setEditMaterialForm({ ...editMaterialForm, name: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        分类
+                      </label>
+                      <input
+                        type="text"
+                        value={editMaterialForm.category}
+                        onChange={(e) => setEditMaterialForm({ ...editMaterialForm, category: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        描述
+                      </label>
+                      <textarea
+                        value={editMaterialForm.description}
+                        onChange={(e) => setEditMaterialForm({ ...editMaterialForm, description: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setEditingMaterial(null)}
+                        className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg transition-colors"
+                      >
+                        取消
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors"
+                      >
+                        保存
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 色卡编辑模态框 */}
+        {editingSwatch && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">✏️ 编辑色卡</h2>
+                <form onSubmit={handleUpdateSwatch}>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        颜色名称 *
+                      </label>
+                      <input
+                        type="text"
+                        value={editSwatchForm.color_name}
+                        onChange={(e) => setEditSwatchForm({ ...editSwatchForm, color_name: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        颜色
+                      </label>
+                      <input
+                        type="color"
+                        value={editSwatchForm.color_code}
+                        onChange={(e) => setEditSwatchForm({ ...editSwatchForm, color_code: e.target.value })}
+                        className="h-10 w-full border rounded-lg cursor-pointer"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          价格
+                        </label>
+                        <input
+                          type="number"
+                          value={editSwatchForm.price}
+                          onChange={(e) => setEditSwatchForm({ ...editSwatchForm, price: e.target.value })}
+                          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          库存
+                        </label>
+                        <input
+                          type="number"
+                          value={editSwatchForm.stock}
+                          onChange={(e) => setEditSwatchForm({ ...editSwatchForm, stock: e.target.value })}
+                          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        描述
+                      </label>
+                      <textarea
+                        value={editSwatchForm.description}
+                        onChange={(e) => setEditSwatchForm({ ...editSwatchForm, description: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setEditingSwatch(null)}
+                        className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg transition-colors"
+                      >
+                        取消
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition-colors"
+                      >
+                        保存
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 产品图片管理模态框 */}
         {managingImageSwatch && (
