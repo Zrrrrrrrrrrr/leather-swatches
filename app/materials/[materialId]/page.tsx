@@ -22,7 +22,6 @@ interface Swatch {
 
 interface ProductImage {
   id: number;
-  product_type: string;
   image_url: string;
   description: string | null;
 }
@@ -260,7 +259,7 @@ export default function MaterialDetail() {
                     <div className="relative">
                       <img
                         src={img.image_url}
-                        alt={`${img.product_type}展示`}
+                        alt="产品展示"
                         className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
                         onClick={() => {
                           console.log('Clicked:', img.image_url);
@@ -272,9 +271,6 @@ export default function MaterialDetail() {
                       />
                     </div>
                     <div className="p-4">
-                      <span className="inline-block bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm mb-2">
-                        {img.product_type}
-                      </span>
                       {img.description && (
                         <p className="text-amber-700 text-sm">{img.description}</p>
                       )}
