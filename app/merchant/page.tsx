@@ -22,7 +22,6 @@ interface Swatch {
 interface ProductImage {
   id: number;
   swatch_id: number;
-  product_type: string;
   image_url: string;
   description: string | null;
 }
@@ -50,7 +49,7 @@ export default function MerchantDashboard() {
   const [managingImageSwatch, setManagingImageSwatch] = useState<Swatch | null>(null);
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
   const [showImageUpload, setShowImageUpload] = useState(false);
-  const [newImage, setNewImage] = useState({ product_type: 'bag', image_url: '', description: '' });
+  const [newImage, setNewImage] = useState({ image_url: '', description: '' });
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -292,7 +291,6 @@ export default function MerchantDashboard() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                product_type: newImage.product_type,
                 image_url: uploadData.url,
                 description: newImage.description,
               }),
@@ -305,7 +303,7 @@ export default function MerchantDashboard() {
         .then((data) => {
           if (data.id) {
             alert('产品图片添加成功！');
-            setNewImage({ product_type: 'bag', image_url: '', description: '' });
+            setNewImage({ image_url: '', description: '' });
             setSelectedFile(null);
             setShowImageUpload(false);
             loadProductImages(managingImageSwatch.id);
@@ -335,13 +333,16 @@ export default function MerchantDashboard() {
       fetch(`/api/swatches/${managingImageSwatch.id}/images`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newImage),
+        body: JSON.stringify({
+          image_url: newImage.image_url,
+          description: newImage.description,
+        }),
       })
         .then((res) => res.json())
         .then((data) => {
           if (data.id) {
             alert('产品图片添加成功！');
-            setNewImage({ product_type: 'bag', image_url: '', description: '' });
+            setNewImage({ image_url: '', description: '' });
             setShowImageUpload(false);
             loadProductImages(managingImageSwatch.id);
           } else {
@@ -832,22 +833,7 @@ export default function MerchantDashboard() {
                 {/* 添加图片表单 */}
                 {showImageUpload && (
                   <form onSubmit={handleAddImage} className="mb-6 p-4 bg-gray-50 rounded-lg">
-                    <div className="grid grid-cols-2 gap-3">
-                      <select
-                        value={newImage.product_type}
-                        onChange={(e) => setNewImage({ ...newImage, product_type: e.target.value })}
-                        className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="bag">手提包</option>
-                        <option value="wallet">钱包</option>
-                        <option value="belt">皮带</option>
-                        <option value="shoes">鞋子</option>
-                        <option value="jacket">夹克</option>
-                        <option value="sofa">沙发</option>
-                        <option value="chair">椅子</option>
-                        <option value="car_interior">汽车内饰</option>
-                        <option value="other">其他</option>
-                      </select>
+                    <div className="space-y-3">
                       <div className="px-3 py-2 border rounded-lg bg-white">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           上传图片文件
@@ -864,7 +850,7 @@ export default function MerchantDashboard() {
                           </p>
                         )}
                       </div>
-                      <div className="col-span-2 border-t pt-3 mt-2">
+                      <div className="border-t pt-3 mt-2">
                         <p className="text-sm text-gray-600 mb-2">或者使用图片 URL：</p>
                         <input
                           type="url"
@@ -878,13 +864,13 @@ export default function MerchantDashboard() {
                         placeholder="描述（可选）"
                         value={newImage.description}
                         onChange={(e) => setNewImage({ ...newImage, description: e.target.value })}
-                        className="col-span-2 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         rows={2}
                       />
                       <button
                         type="submit"
                         disabled={uploading}
-                        className={`col-span-2 py-2 rounded-lg transition-colors ${
+                        className={`py-2 rounded-lg transition-colors ${
                           uploading
                             ? 'bg-gray-400 cursor-not-allowed'
                             : 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -903,16 +889,13 @@ export default function MerchantDashboard() {
                       <div key={img.id} className="border rounded-lg overflow-hidden bg-gray-50">
                         <img
                           src={img.image_url}
-                          alt={img.description || img.product_type}
+                          alt={img.description || '产品图片'}
                           className="w-full h-40 object-cover"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZTNlM2UzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+SW1hZ2UgTm90IEZvdW5kPC90ZXh0Pjwvc3ZnPg==';
                           }}
                         />
                         <div className="p-3">
-                          <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mb-2">
-                            {img.product_type}
-                          </span>
                           {img.description && (
                             <p className="text-sm text-gray-600 line-clamp-2">{img.description}</p>
                           )}

@@ -34,17 +34,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { swatchId } = await params;
     const body = await request.json();
-    const { product_type, image_url, description } = body;
+    const { image_url, description } = body;
 
-    if (!product_type || !image_url) {
-      return NextResponse.json({ error: 'Product type and image URL are required' }, { status: 400 });
+    if (!image_url) {
+      return NextResponse.json({ error: 'Image URL is required' }, { status: 400 });
     }
 
     const { data, error } = await supabase!
       .from('product_images')
       .insert({
         swatch_id: parseInt(swatchId),
-        product_type,
         image_url,
         description: description || null,
         created_at: new Date().toISOString()

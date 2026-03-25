@@ -29,11 +29,13 @@ CREATE TABLE IF NOT EXISTS swatches (
 CREATE TABLE IF NOT EXISTS product_images (
   id BIGSERIAL PRIMARY KEY,
   swatch_id BIGINT REFERENCES swatches(id) ON DELETE CASCADE,
-  product_type VARCHAR(50) NOT NULL,
   image_url TEXT NOT NULL,
   description TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- 如果已存在 product_type 列，删除它（执行一次即可）
+-- ALTER TABLE product_images DROP COLUMN IF EXISTS product_type;
 
 -- 创建索引以加速查询
 CREATE INDEX IF NOT EXISTS idx_swatches_material_id ON swatches(material_id);
