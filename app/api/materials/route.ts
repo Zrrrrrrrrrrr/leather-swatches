@@ -2,23 +2,58 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 // 获取所有材料（带产品图片）
-export async function GET() {
+// 支持搜索参数：?search=关键词&category=分类
+// 支持获取分类列表：?action=categories
+export async function GET(request: NextRequest) {
   try {
     if (!isSupabaseConfigured()) {
       return NextResponse.json({ error: 'Supabase 未配置，请检查环境变量' }, { status: 503 });
     }
 
-    // 获取所有材料
-    const { data: materials, error } = await supabase!
+    const { searchParams } = new URL(request.url);
+    const action = searchParams.get('action');
+    
+    // 如果是获取分类列表
+    if (action === 'categories') {
+      const { data, error } = await supabase!
+        .from('materials')
+        .select('category')
+        .not('category', 'is', null);
+
+      if (error) throw error;
+
+      // 去重并过滤空值
+      const categories = [...new Set(data.map(m => m.category).filter(Boolean))];
+      return NextResponse.json(categories);
+    }
+    
+    // 否则执行正常的材料查询逻辑
+    const search = searchParams.get('search');
+    const category = searchParams.get('category');
+
+    // 构建查询
+    let query = supabase!
       .from('materials')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*');
+
+    // 添加搜索条件
+    if (search) {
+      // 搜索名称和描述（模糊匹配）
+      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
+    }
+
+    // 添加分类筛选
+    if (category) {
+      query = query.eq('category', category);
+    }
+
+    const { data: materials, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw error;
 
     // 为每个材料获取第一张产品图片
     const materialsWithImages = await Promise.all(
-      materials.map(async (material) => {
+      (materials || []).map(async (material) => {
         // 获取该材料的色卡
         const { data: swatches } = await supabase!
           .from('swatches')

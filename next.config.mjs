@@ -3,7 +3,7 @@ const nextConfig = {
   // 允许所有主机访问（开发环境）
   experimental: {
     serverActions: {
-      bodySizeLimit: '5mb',
+      bodySizeLimit: '50mb',
     },
   },
   // 配置图片上传大小限制

@@ -28,10 +28,12 @@ interface ProductImage {
 
 export default function MerchantDashboard() {
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [filteredMaterials, setFilteredMaterials] = useState<Material[]>([]);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
   const [swatches, setSwatches] = useState<Swatch[]>([]);
   const [showAddMaterial, setShowAddMaterial] = useState(false);
   const [showAddSwatch, setShowAddSwatch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // 编辑状态
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
@@ -69,11 +71,26 @@ export default function MerchantDashboard() {
     loadMaterials();
   }, []);
 
+  // 搜索过滤
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const filtered = materials.filter((m) =>
+        m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.category?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredMaterials(filtered);
+    } else {
+      setFilteredMaterials(materials);
+    }
+  }, [searchQuery, materials]);
+
   const loadMaterials = () => {
     fetch('/api/materials')
       .then((res) => res.json())
       .then((data: Material[]) => {
         setMaterials(data);
+        setFilteredMaterials(data);
       });
   };
 
@@ -441,6 +458,22 @@ export default function MerchantDashboard() {
                 </button>
               </div>
 
+              {/* 搜索框 */}
+              <div className="mb-4">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="🔍 搜索材料..."
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {searchQuery && (
+                  <div className="mt-1 text-sm text-gray-500">
+                    找到 {filteredMaterials.length} 个结果
+                  </div>
+                )}
+              </div>
+
               {showAddMaterial && (
                 <form onSubmit={handleAddMaterial} className="mb-4 p-4 bg-gray-50 rounded-lg">
                   <div className="space-y-3">
@@ -477,7 +510,7 @@ export default function MerchantDashboard() {
               )}
 
               <div className="space-y-2">
-                {materials.map((material) => (
+                {filteredMaterials.map((material) => (
                   <div
                     key={material.id}
                     className={`group relative p-3 rounded-lg transition-colors ${
