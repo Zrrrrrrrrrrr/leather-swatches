@@ -60,18 +60,20 @@ vercel
 leather-swatches/
 ├── app/
 │   ├── api/              # API 路由
-│   │   ├── materials/    # 材料管理
+│   │   ├── materials/    # 材料管理（支持搜索/筛选）
 │   │   ├── swatches/     # 色卡管理
 │   │   └── upload/       # 图片上传
 │   ├── materials/        # 材料详情页
-│   ├── merchant/         # 商家后台
-│   └── page.tsx          # 首页
+│   ├── merchant/         # 商家后台（带搜索）
+│   └── page.tsx          # 首页（带搜索和分类筛选）
 ├── lib/
 │   ├── supabase.ts       # Supabase 客户端
 │   └── db.ts             # 本地数据库（已废弃）
 ├── CLOUD_SETUP.md        # 云存储配置指南
 ├── DEPLOY.md             # 部署指南
+├── DEPLOY_CN.md          # 国内部署说明
 ├── supabase-schema.sql   # 数据库表结构
+├── supabase-storage-policy.sql  # Storage 策略
 └── vercel.json           # Vercel 配置
 ```
 
@@ -119,6 +121,14 @@ leather-swatches/
 - **Database**: Supabase (PostgreSQL)
 - **Storage**: Vercel Blob
 - **Deployment**: Vercel
+
+## ✅ 已完成功能
+
+- [x] 材料、色卡、产品图片管理
+- [x] 搜索和分类筛选（2026-04-10）
+- [x] 图片上传（Supabase Storage）
+- [x] 国内部署（PM2 + Nginx）
+- [x] 响应式设计（移动端适配）
 
 ## 📝 待办事项
 
