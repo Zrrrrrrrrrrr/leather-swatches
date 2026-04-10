@@ -64,25 +64,9 @@ export default function Home() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [categories, setCategories] = useState<string[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // 加载分类列表
-  useEffect(() => {
-    fetch('/api/materials?action=categories')
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setCategories(data);
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to fetch categories:', err);
-      });
-  }, []);
-
-  // 加载材料列表（支持搜索和筛选）
+  // 加载材料列表（支持搜索）
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
       setLoading(true);
@@ -90,9 +74,6 @@ export default function Home() {
       const params = new URLSearchParams();
       if (searchQuery.trim()) {
         params.set('search', searchQuery.trim());
-      }
-      if (selectedCategory) {
-        params.set('category', selectedCategory);
       }
 
       fetch(`/api/materials?${params.toString()}`)
@@ -108,13 +89,7 @@ export default function Home() {
     }, 300); // 300ms 防抖
 
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery, selectedCategory]);
-
-  // 清除筛选
-  const clearFilters = () => {
-    setSearchQuery('');
-    setSelectedCategory('');
-  };
+  }, [searchQuery]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
@@ -133,88 +108,27 @@ export default function Home() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {/* 搜索和筛选区域 */}
-        <div className="mb-8 bg-white rounded-lg shadow p-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* 搜索框 */}
-            <div className="flex-1">
-              <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
-                🔍 搜索
-              </label>
-              <input
-                type="text"
-                id="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜索材料名称或描述..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* 分类筛选 */}
-            <div className="md:w-48">
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                📂 分类
-              </label>
-              <select
-                id="category"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              >
-                <option value="">全部分类</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* 清除筛选按钮 */}
-            {(searchQuery || selectedCategory) && (
-              <div className="flex items-end">
-                <button
-                  onClick={clearFilters}
-                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  ✕ 清除筛选
-                </button>
-              </div>
-            )}
+        {/* 标题和搜索框 */}
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold text-amber-900 mb-2">
+              {searchQuery ? '搜索结果' : '选择皮革材料'}
+            </h2>
+            <p className="text-amber-700">
+              {searchQuery
+                ? `找到 ${materials.length} 个符合条件的材料`
+                : '浏览我们的优质皮革材料，点击查看详情和色卡选项'}
+            </p>
           </div>
-
-          {/* 显示当前筛选状态 */}
-          {(searchQuery || selectedCategory) && (
-            <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
-              <span>当前筛选：</span>
-              {searchQuery && (
-                <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
-                  🔍 "{searchQuery}"
-                </span>
-              )}
-              {selectedCategory && (
-                <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
-                  📂 {selectedCategory}
-                </span>
-              )}
-              <span className="text-gray-500">
-                共 {materials.length} 个结果
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* 材料列表标题 */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-amber-900 mb-2">
-            {searchQuery || selectedCategory ? '筛选结果' : '选择皮革材料'}
-          </h2>
-          <p className="text-amber-700">
-            {searchQuery || selectedCategory
-              ? `找到 ${materials.length} 个符合条件的材料`
-              : '浏览我们的优质皮革材料，点击查看详情和色卡选项'}
-          </p>
+          <div className="w-64">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="🔍 搜索材料..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            />
+          </div>
         </div>
 
         {/* 材料列表 */}
@@ -227,16 +141,16 @@ export default function Home() {
           <div className="text-center py-12 bg-white rounded-lg shadow">
             <div className="text-6xl mb-4">🔍</div>
             <p className="text-amber-700 text-lg">
-              {searchQuery || selectedCategory
+              {searchQuery
                 ? '没有找到符合条件的材料'
                 : '暂无皮革材料'}
             </p>
-            {(searchQuery || selectedCategory) ? (
+            {searchQuery ? (
               <button
-                onClick={clearFilters}
+                onClick={() => setSearchQuery('')}
                 className="mt-4 text-amber-600 hover:underline"
               >
-                清除筛选条件
+                清除搜索条件
               </button>
             ) : (
               <p className="text-amber-600 mt-2">请从商家入口添加材料</p>
