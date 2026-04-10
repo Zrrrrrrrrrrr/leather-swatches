@@ -109,7 +109,15 @@ export default function MerchantDashboard() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newMaterial),
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 409) {
+          // 重复名称
+          return res.json().then((data) => {
+            throw new Error(data.message || '材料名称已存在');
+          });
+        }
+        return res.json();
+      })
       .then((data) => {
         if (data.id) {
           alert('材料添加成功！');
@@ -117,8 +125,11 @@ export default function MerchantDashboard() {
           setShowAddMaterial(false);
           loadMaterials();
         } else {
-          alert('添加失败：' + data.error);
+          alert('添加失败：' + (data.error || '未知错误'));
         }
+      })
+      .catch((err) => {
+        alert('添加失败：' + err.message);
       });
   };
 

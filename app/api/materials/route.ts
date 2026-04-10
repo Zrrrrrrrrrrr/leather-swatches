@@ -102,10 +102,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
+    // 检查材料名称是否已存在
+    const { data: existing } = await supabase!
+      .from('materials')
+      .select('id, name')
+      .eq('name', name.trim())
+      .single();
+
+    if (existing) {
+      return NextResponse.json(
+        { 
+          error: 'Duplicate name',
+          message: `材料名称 "${name}" 已存在，请使用不同的名称`
+        },
+        { status: 409 }
+      );
+    }
+
     const { data, error } = await supabase!
       .from('materials')
       .insert({
-        name,
+        name: name.trim(),
         description: description || null,
         category: category || null,
         created_at: new Date().toISOString()
