@@ -39,7 +39,8 @@ export async function GET(request: NextRequest) {
     // 添加搜索条件
     if (search) {
       // 搜索名称和描述（模糊匹配）
-      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
+      // 使用 text search 避免中文编码问题
+      query = query.or(`name.cs.%${search}%,description.cs.%${search}%`);
     }
 
     // 添加分类筛选
